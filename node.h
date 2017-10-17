@@ -14,7 +14,6 @@
 
 using namespace std;
 
-
 /************************************************
    * NODE
    * Holds data and points to another node.
@@ -31,9 +30,9 @@ public:
    Node <T> * pPrev; // a pointer to the previous node
       
    // constructors
-   Node();                    //     default constructor
-   Node(const T & data);      // non-default constructor
-   Node(const Node <T> * node); //        copy constructor
+   Node();                       // default constructor
+   Node(const T & data);         // non-default constructor
+   Node(const Node <T> * node);  // copy constructor
    
    // operators
    Node <T> & operator = (const Node <T> & rhs); // Assignment
@@ -88,62 +87,77 @@ Node <T> & Node <T> :: operator = (const Node <T> & rhs)
    return *this;
 }
 
+
+/******************************************
+ * insert()
+ * Insert a new Node into the current linked-list. The first parameter is the
+ * Node preceding the new Node in the list. The second parameter is the value
+ * to be placed in the new Node. An optional third parameter is set to true if
+ * the new element is to be at the head of the list. Please return a pointer to
+ * the newly created Node. This should be a non-member function.
+ * ****************************************/
+template <class T>
+Node <T> * insert(Node <T> * pCurrent, // our new node will be before this node
+                  const T & t,         // value that will reside in the new node
+                  bool after = false)  // by default, we insert before
+{
+   Node<T> *pNew = new Node<T> (t);
+   
+   if (pCurrent && after == false)
+   {
+      pNew->pNext = pCurrent;
+      pNew->pPrev = pCurrent->pPrev;
+      pCurrent->pPrev = pNew;
+      if (pNew->pPrev)
+         pNew->pPrev->pNext = pNew;
+   }
+   if (pCurrent && after == true)
+   {
+      pNew->pPrev = pCurrent;
+      pNew->pNext = pCurrent->pNext;
+      pCurrent->pNext = pNew;
+      if (pNew->pNext)
+         pNew->pNext->pPrev = pNew;
+   }
+   return pNew;
+}
 /****************************************
  * copy()
- * Copy a linked-list. Takes a pointer to a Node as a parameter and returns a newly created linked-list containing a copy of all the nodes below the list represented by the parameter. This should be a non-member function.
+ * Copy a linked-list. Takes a pointer to a Node as a parameter and returns a
+ * newly created linked-list containing a copy of all the nodes below the list
+ * represented by the parameter. This should be a non-member function.
  * ***************************************/
 template <class T>
 Node <T> * copy(const Node <T> * pSource) throw (const char *)
 {
-   Node<T> *pDestination = new Node<T>;
-   /*
-    pDestination <- new Node(pSource->data)
-    pSrc <- pSource
-    pDes <- pDestination
-    
-    FOR (pSrc pSrc->pNext ... end of the list)
-      pDes <- insert(pSrc->data, pDes, true)
-    RETURN pDestination
-    */
-   return pDestination;
-}
-
-/******************************************
- * insert()
- * Insert a new Node into the current linked-list. The first parameter is the Node preceding the new Node in the list. The second parameter is the value to be placed in the new Node. An optional third parameter is set to true if the new element is to be at the head of the list. Please return a pointer to the newly created Node. This should be a non-member function.
- * ****************************************/
-template <class T>
-Node <T> * insert(Node <T> * pNode,    // our new node will be before this node
-                  const T & t,         // the value that is to reside in the new node
-                  bool after = false)  // by default, we insert before
-{
-   Node<T> *pNew = new Node<T>;
-   /*
-    IF pCurrent ≠ NULL and after = false
-      pNew->pNext <- pCurrent
-      pNew->pPrev <- pCurrent->pPrev
-      pCurrent->pPrev <- pNew
-      IF pNew->pPrev
-         pNew->pPrev->pNext <- pNew
-    IF pCurrent ≠ NULL and after = true
-    ... something similar...
-    */
-   return pNew;
+   Node<T> *pNewHead = new Node<T>(pSource->data);
+   const Node<T> *pSrc = pSource;
+   Node<T> *pCopy = pNewHead;
+   
+   pSrc = pSrc->pNext;
+   while (pSrc)
+   {
+      pCopy = insert(pCopy, pSrc->data, true);
+      pSrc = pSrc->pNext;
+   }
+   return pNewHead;
 }
 
 /******************************************
  * find()
- * Find the Node corresponding to a given passed value from a given linked-list. The first parameter is a pointer to the front of the list, the second is the value to be found. The return value is a pointer to the found node if one exists. This should be a non-member function.
+ * Find the Node corresponding to a given passed value from a given linked-list.
+ * The first parameter is a pointer to the front of the list, the second is the
+ * value to be found. The return value is a pointer to the found node if one
+ * exists. This should be a non-member function.
  * ****************************************/
 template <class T>
 Node <T> * find(Node <T> * pHead, const T & t)
 {
-   /*
-   FOR (Node<T> *p <- pHead ... end of the list)
-    IF p->data = t
-      RETURN p
-   RETURN NULL
-    */
+   for (Node<T> *p = pHead; p; p = p->pNext)
+   {
+      if (p->data == t)
+         return p;
+   }
    return NULL;
 }
 
@@ -152,49 +166,57 @@ Node <T> * find(Node <T> * pHead, const T & t)
  * Display the contents of a given linked-list.
  * ****************************************/
 template <class T>
-ostream & operator << (ostream & out, Node <T> & rhs)
+ostream & operator << (ostream & out, const Node <T> *rhs)
 {
-   
+
+   for (const Node<T> *it = rhs; it; it = it->pNext)
+   {
+      out << it->data;
+      if (it->pNext)
+         out << ", ";
+   }
+   return out;
 }
 /******************************************
  * freeData()
- * Release all the memory contained in a given linked-list. The one parameter is a pointer to the head of the list. This should be a non-member function.
+ * Release all the memory contained in a given linked-list. The one parameter
+ * is a pointer to the head of the list. This should be a non-member function.
  * ****************************************/
 template <class T>
 void freeData(Node <T> * & pHead)
 {
-   /*
-    WHILE pHead ≠ NULL
-      pDelete = pHead
-      pHead <- pHead->pNext
-      DELETE pDelete
-    */
+   while (pHead)
+   {
+      Node<T> *pDelete = pHead;
+      pHead = pHead->pNext;
+      delete pDelete;
+   }
 }
 
 /******************************************
  * remove()
- * This will remove a given node from the linked list it is attached to. It takes a pointer to a Node as a parameter. This is the node to be deleted. It returns a pointer to the previous node in the list if such a node exists. Otherwise, it returns a pointer to the next node.
+ * This will remove a given node from the linked list it is attached to. It
+ * takes a pointer to a Node as a parameter. This is the node to be deleted.
+ * It returns a pointer to the previous node in the list if such a node exists.
+ * Otherwise, it returns a pointer to the next node.
  * ****************************************/
 template <class T>
 Node <T> * remove (const Node <T> * pRemove)
 {
    Node<T> *pReturn = new Node<T>;
-   /*
-    IF NULL = pRemove
-      RETURN
-    
-    IF pRemove -> pPrev
-      pRemove -> pPrev -> pNext <- pRemove -> pNext
-    IF pRemove pNext
-      pRemove -> pNext -> pPrev <- pRemove -> pPrev
-    IF pRemove->pPrev
-      pReturn <- pRemove->pPrev;
-    ELSE
-      pReturn <- pRemove->pNext
-    
-    DELETE pRemove
-    RETURN pReturn
-    */
+   if (!pRemove)
+      return NULL;
+   
+   if (pRemove->pPrev)
+      pRemove->pPrev->pNext = pRemove->pNext;
+   if (pRemove->pNext)
+      pRemove->pNext->pPrev = pRemove->pPrev;
+   if (pRemove->pPrev)
+      pReturn = pRemove->pPrev;
+   else
+      pReturn = pRemove->pNext;
+   
+   delete pRemove;
    return pReturn;
 }
 
